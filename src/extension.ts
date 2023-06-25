@@ -56,7 +56,11 @@ async function getEnvFilelist() {
 
 //3
 function makeCompletionItem(item: string, desc: string[]) {
-  const completionItem = new vscode.CompletionItem(item);
+  const completionItem = new vscode.CompletionItem(
+    item,
+    vscode.CompletionItemKind.EnumMember
+  );
+  completionItem.detail = "env-type";
   completionItem.insertText = new vscode.SnippetString(`process.env.${item}`);
   completionItem.documentation = new vscode.MarkdownString(desc.join(`\n`));
 

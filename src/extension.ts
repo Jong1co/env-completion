@@ -1,26 +1,109 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
-
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "env-type" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('env-type.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Env Type!');
-	});
-
-	context.subscriptions.push(disposable);
+import * as vscode from "vscode";
+//1
+async function readFile(filename: string) {
+  const workspaceFolder = readWorkspaceFolder();
+  const uri = vscode.Uri.joinPath(workspaceFolder.uri, filename);
+  try {
+    const data = await vscode.workspace.fs.readFile(uri);
+    const text = new TextDecoder().decode(data);
+    return text;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
-// This method is called when your extension is deactivated
+const getEnvVariable = async (env: string) => {
+  const data = await readFile(env);
+  if (!data) {
+    return;
+  }
+
+  const envVariable = data.split(/\n/g).filter((variable) => variable !== "");
+
+  return envVariable.map((v) => {
+    return v.split("=");
+  });
+};
+
+//2
+const filterEnvFileList = (fileList: [string, vscode.FileType][]) => {
+  const regExp = /^\.env/g;
+  return fileList
+    .map(([name, type]) => name)
+    .filter((filename) => filename.match(regExp));
+};
+
+function readWorkspaceFolder() {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    throw new Error("No workspace folders are open");
+  }
+  return workspaceFolder;
+}
+
+async function readDir(uri: vscode.Uri) {
+  const filesAndDirectories = await vscode.workspace.fs.readDirectory(uri);
+  return filesAndDirectories;
+}
+
+async function getEnvFilelist() {
+  const workspaceFolder = readWorkspaceFolder();
+  const filesAndDirectories = await readDir(workspaceFolder.uri);
+  const filteredEnvFileList = filterEnvFileList(filesAndDirectories);
+
+  return filteredEnvFileList;
+}
+
+//3
+function makeCompletionItem(item: string, desc: string[]) {
+  const completionItem = new vscode.CompletionItem(item);
+  completionItem.insertText = new vscode.SnippetString(`process.env.${item}`);
+  completionItem.documentation = new vscode.MarkdownString(desc.join(`\n`));
+
+  return completionItem;
+}
+
+export function activate(context: vscode.ExtensionContext) {
+  let disposable = vscode.languages.registerCompletionItemProvider(
+    { language: "typescript", scheme: "file" },
+    {
+      async provideCompletionItems(
+        document: vscode.TextDocument,
+        position: vscode.Position
+      ) {
+        const variable: { [key in string]: string[] } = {};
+        const completionItemList: vscode.CompletionItem[] = [];
+
+        const envFilelist = await getEnvFilelist();
+        if (!envFilelist) {
+          return;
+        }
+
+        for (let file of envFilelist) {
+          const envVariable = await getEnvVariable(file);
+          if (!envVariable) {
+            continue;
+          }
+          envVariable.forEach(([key, value]) => {
+            if (variable[key]) {
+              variable[key].push(`${file}: \n${value}\n`);
+            } else {
+              variable[key] = [`${file}: \n${value}\n`];
+            }
+          });
+        }
+
+        Object.entries(variable).forEach(([key, value]) => {
+          const completionItem = makeCompletionItem(key, value);
+          completionItemList.push(completionItem);
+        });
+
+        return completionItemList;
+      },
+    }
+  );
+
+  context.subscriptions.push(disposable);
+}
+
 export function deactivate() {}

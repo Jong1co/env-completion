@@ -69,7 +69,10 @@ function makeCompletionItem(item: string, desc: string[]) {
 
 export function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.languages.registerCompletionItemProvider(
-    { language: "typescript", scheme: "file" },
+    [
+      { language: "typescript", scheme: "file" },
+      { language: "typescriptreact", scheme: "file" },
+    ],
     {
       async provideCompletionItems(
         document: vscode.TextDocument,

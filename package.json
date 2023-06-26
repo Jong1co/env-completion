@@ -9,7 +9,7 @@
     "url": "https://github.com/Jong1co/env-completion.git"
   },
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.79.0"
   },
@@ -17,7 +17,9 @@
     "Other"
   ],
   "activationEvents": [
-    "workspaceContains:**/.env*"
+    "workspaceContains:**/.env*",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
   ],
   "main": "./out/extension.js",
   "contributes": {},

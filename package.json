@@ -1,7 +1,11 @@
 {
-  "name": "env-type",
-  "displayName": "Env Type",
-  "description": "Automatically load and complete environment variables",
+  "name": "env-completion",
+  "displayName": "Env Completion",
+  "description": "환경 변수를 자동완성으로 사용할 수 있습니다.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jong1co/env-completion.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.79.0"

@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://github.com/Jong1co/env-completion.git"
   },
+  "license": "MIT",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.79.0"
